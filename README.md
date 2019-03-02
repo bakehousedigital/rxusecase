@@ -1,4 +1,5 @@
-[ ![jcenter](https://api.bintray.com/packages/rrdev/RxUseCase/digital.bakehouse.rxusecase/images/download.svg?version=0.9) ](https://bintray.com/rrdev/RxUseCase/digital.bakehouse.rxusecase/0.9/link)[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[ ![jcenter](https://api.bintray.com/packages/rrdev/RxUseCase/digital.bakehouse.rxusecase/images/download.svg?version=0.9) ](https://bintray.com/rrdev/RxUseCase/digital.bakehouse.rxusecase/0.9/link)[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Build Status](https://img.shields.io/travis/com/bakehousedigital/rxusecase.svg)](https://img.shields.io/travis/com/bakehousedigital/rxusecase.svg)
+
 # RxUseCase
 
 RxUseCase is a tiny Java library for wrapping business logic into reactive streams which expose data in a standardized way.
