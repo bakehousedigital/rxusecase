@@ -6,5 +6,5 @@ before_install:
 jdk:
   - oraclejdk8
 
-script:
+install:
   - ./gradlew rxusecase:assemble rxusecase:test
