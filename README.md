@@ -1,4 +1,4 @@
-[ ![jcenter](https://api.bintray.com/packages/rrdev/RxUseCase/digital.bakehouse.rxusecase/images/download.svg?version=0.9) ](https://bintray.com/rrdev/RxUseCase/digital.bakehouse.rxusecase/0.9/link)[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Build Status](https://img.shields.io/travis/bakehousedigital/rxusecase/master.svg)](https://img.shields.io/travis/bakehousedigital/rxusecase/master.svg)
+[ ![jcenter](https://api.bintray.com/packages/rrdev/RxUseCase/digital.bakehouse.rxusecase/images/download.svg) ](https://bintray.com/rrdev/RxUseCase/digital.bakehouse.rxusecase/_latestVersion)[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Build Status](https://img.shields.io/travis/bakehousedigital/rxusecase/master.svg)](https://img.shields.io/travis/bakehousedigital/rxusecase/master.svg)
 
 # RxUseCase
 
