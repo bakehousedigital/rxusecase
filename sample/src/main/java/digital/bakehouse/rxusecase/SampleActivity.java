@@ -9,7 +9,6 @@ import android.widget.Toast;
 import digital.bakehouse.rxusecase.decorator.LogDecorator;
 import digital.bakehouse.rxusecase.decorator.SchedulerDecorator;
 import digital.bakehouse.rxusecase.operation.SynchronousUseCase;
-import digital.bakehouse.rxusecase.toolbox.None;
 import digital.bakehouse.rxusecase.toolbox.Objects;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.schedulers.Schedulers;
@@ -28,7 +27,7 @@ public class SampleActivity extends AppCompatActivity implements LogDecorator.Lo
         RxUseCase.addDecorator(SchedulerDecorator.allOn(Schedulers.io()));
 
         new GetTimeMillis()
-                .create(None.VALUE)
+                .create()
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(item -> Toast.makeText(this,
                         String.valueOf(item), Toast.LENGTH_SHORT).show());
@@ -43,10 +42,10 @@ public class SampleActivity extends AppCompatActivity implements LogDecorator.Lo
         Log.d(getClass().getSimpleName(), Thread.currentThread().getName() + ": " + message);
     }
 
-    static class GetTimeMillis extends SynchronousUseCase<None, Long> {
+    static class GetTimeMillis extends SynchronousUseCase<Void, Long> {
 
         @Override
-        public Long act(None input) {
+        public Long act(Void input) {
             return System.currentTimeMillis();
         }
     }

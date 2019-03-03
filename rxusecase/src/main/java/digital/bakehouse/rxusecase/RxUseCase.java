@@ -25,6 +25,10 @@ public abstract class RxUseCase<I, O> {
         DECORATORS.add(FailureExceptionConverter.getDefault());
     }
 
+    public final Observable<Response<O>> create() {
+        return create((I) null);
+    }
+
     public final Observable<Response<O>> create(I input) {
         return create(wrapRequest(input));
     }

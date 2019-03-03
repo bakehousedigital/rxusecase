@@ -2,7 +2,6 @@ package digital.bakehouse.rxusecase;
 
 import digital.bakehouse.rxusecase.toolbox.Objects;
 
-@SuppressWarnings("WeakerAccess")
 public class Response<O> {
     private O data;
     private Failure failure;
@@ -30,6 +29,14 @@ public class Response<O> {
 
     public static <O> Response<O> fail(Failure failure) {
         return new Response<>(null, failure);
+    }
+
+    public static <O> Response<O> fail(Response<?> response) {
+        return fail(response.failure);
+    }
+
+    public static Response<Void> empty() {
+        return succeed(null);
     }
 
     @Override

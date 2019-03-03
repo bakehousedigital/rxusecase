@@ -8,7 +8,7 @@ public abstract class ContinuousUseCase<I, O> extends RxUseCase<I, O>
         implements Continuous<I, O> {
 
     @Override
-    protected Observable<Response<O>> execute(I input) {
+    protected final Observable<Response<O>> execute(I input) {
         return toRx(this, input);
     }
 }

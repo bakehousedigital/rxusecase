@@ -7,7 +7,7 @@ import io.reactivex.Observable;
 public abstract class AsynchronousUseCase<I, O> extends RxUseCase<I, O>
         implements Asynchronous<I, O> {
     @Override
-    protected Observable<Response<O>> execute(I input) {
+    protected final Observable<Response<O>> execute(I input) {
         return toRx(this, input);
     }
 }
