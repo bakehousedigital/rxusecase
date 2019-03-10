@@ -16,7 +16,7 @@ The library provides the core components for implementing the Use Cases (also kn
 ### Gradle
 
 ```groovy
-implementation 'digital.bakehouse:rxusecase:0.9'
+implementation 'digital.bakehouse:rxusecase:0.9.1'
 ```
 
 ### Maven
@@ -24,7 +24,7 @@ implementation 'digital.bakehouse:rxusecase:0.9'
 <dependency>
 	<groupId>digital.bakehouse</groupId>
 	<artifactId>rxusecase</artifactId>
-	<version>0.9</version>
+	<version>0.9.1</version>
 	<type>pom</type>
 </dependency>
 ```
@@ -59,9 +59,88 @@ This enables another way of describing use-cases as entities which act as a stan
   <img src='blob/doc-how-details.PNG' alt='How it works - Complex' align='middle' width='80%'/>
 </p>
 
+<br/>
+
+**Example: Login Use-Case**
+
+Let's take for example a simple login use-case. The typical requirement of such a use-case is to:
+* first validate the user's email
+* then check the internet connection
+* and only in case the email is valid, and there is internet connection - to call the server API for authentication. 
+
+Additionally, as developers we would like to log the input, output and the execution time of the use-case.
+
+<br/>
+
+Using **RxUseCase** this can be modelled as described below.
+```java
+    class LoginUser extends RxUseCase<Credentials, User> {
+
+        private static final String VALIDATION_ERROR = "0";
+        private static final String NETWORK_ERROR = "1";
+        private static final String LOGIN_ERROR = "2";
+        private InputValidator validator;
+        private Networker networker;
+        private UserRepository userRepository;
+
+        public LoginUser(InputValidator validator, Networker networker, UserRepository userRepository) {
+            this.validator = validator;
+            this.networker = networker;
+            this.userRepository = userRepository;
+        }
+
+        @Override
+        protected Observable<Response<User>> execute(Credentials input) {
+            boolean isEmailValid = validator.validateEmail(input.getEmail());
+            if (!isEmailValid) {
+                return justFail(VALIDATION_ERROR, "The email is not valid!");
+            }
+
+            if (!networker.isConnected()) {
+                return justFail(NETWORK_ERROR, "There is no connection to the internet!");
+            }
+
+            return userRepository.authenticate(input.getEmail(), input.getPassword())
+                    .map(Response::succeed)
+                    .onErrorReturnItem(Response.fail(LOGIN_ERROR, "Invalid credentials"));
+        }
+    }
+```
+<br/>
+
+And the usage would look similar to the following:
+
+```java
+        LoginUser loginUser = new LoginUser(validator, networker, userRepository);
+        loginUser
+                .decorateWith(LogDecorator.getDefault())
+                .create(new Credentials("user@test.com", "qwerty"))
+                .subscribe(new ResponseConsumer<>(
+                        user -> //do things with the user
+                        failure -> //do things with failure
+                ));
+```
+
+<br/>
+
+The diagram from above mapped to this use-case looks like this:
+
+<br/>
+
+<p align="center">
+  <img src='blob/doc-how-login.PNG' alt='How it works - Complex' align='middle' width='80%'/>
+</p>
+
+<br/>
+
 
 ## Usage
-Extend RxUseCase class or one of its existing implemenations.
+To be added, but for now please check
+
+* Extending RxUseCase, SynchronousUseCase, AsynchronousUseCase, ContinuousUseCase
+* Wrapping using RxUseCase .wrap methods
+* Consuming RxUseCases with ResponseConsumers
+* Decorating RxUseCases with UseCaseDecorators
 
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
