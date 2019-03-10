@@ -1,8 +1,11 @@
 package digital.bakehouse.rxusecase;
 
-@SuppressWarnings({"WeakerAccess", "unused"})
 public class FailureException extends Exception {
     private Failure failure;
+
+    public FailureException(String message) {
+        this(new Failure(message, message));
+    }
 
     public FailureException(Failure failure) {
         super(failure.getMessage());

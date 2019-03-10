@@ -1,10 +1,10 @@
 package digital.bakehouse.rxusecase;
 
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
 
-import digital.bakehouse.rxusecase.decorator.UseCaseDecorator;
 import digital.bakehouse.rxusecase.decorator.FailureExceptionConverter;
+import digital.bakehouse.rxusecase.decorator.UseCaseDecorator;
 import digital.bakehouse.rxusecase.operation.Asynchronous;
 import digital.bakehouse.rxusecase.operation.Continuous;
 import digital.bakehouse.rxusecase.operation.Synchronous;
@@ -16,14 +16,15 @@ import io.reactivex.ObservableOnSubscribe;
 import static io.reactivex.Observable.defer;
 import static io.reactivex.Observable.fromCallable;
 
-@SuppressWarnings({"WeakerAccess", "unused"})
 public abstract class RxUseCase<I, O> {
-    private final String ORIGIN = getClass().getSimpleName();
-    private static final List<UseCaseDecorator> DECORATORS = new ArrayList<>();
+    private static final Collection<UseCaseDecorator> GLOBAL_DECORATORS = new ArrayList<>();
 
     static {
-        DECORATORS.add(FailureExceptionConverter.getDefault());
+        addDefaultDecoratorsInto(GLOBAL_DECORATORS);
     }
+
+    private final String ORIGIN = getClass().getSimpleName();
+    private Collection<UseCaseDecorator> decorators;
 
     public final Observable<Response<O>> create() {
         return create((I) null);
@@ -34,7 +35,12 @@ public abstract class RxUseCase<I, O> {
     }
 
     public final Observable<Response<O>> create(Request<I> request) {
-        return decorate(execute(request.getInput()), withOrigin(request, ORIGIN));
+        return decorate(execute(request.getInput()),
+                withOrigin(request, ORIGIN), getDecorators());
+    }
+
+    public final Response<O> get() {
+        return get((I) null);
     }
 
     public final Response<O> get(I input) {
@@ -47,7 +53,40 @@ public abstract class RxUseCase<I, O> {
 
     protected abstract Observable<Response<O>> execute(I input);
 
-    private Request<I> wrapRequest(I input) {
+    @SuppressWarnings("unchecked")
+    public final <T extends RxUseCase<I, O>> T decorateWith(Collection<UseCaseDecorator> decorators) {
+        createDecorators().addAll(decorators);
+        return (T) this;
+    }
+
+    @SuppressWarnings("unchecked")
+    public final <T extends RxUseCase<I, O>> T decorateWith(UseCaseDecorator decorator) {
+        createDecorators().add(decorator);
+        return (T) this;
+    }
+
+    @SuppressWarnings("unchecked")
+    public final <T extends RxUseCase<I, O>> T decorateWithNothing() {
+        createDecorators();
+        return (T) this;
+    }
+
+    private Collection<UseCaseDecorator> getDecorators() {
+        if (decorators != null) {
+            return decorators;
+        }
+        return GLOBAL_DECORATORS;
+    }
+
+    private Collection<UseCaseDecorator> createDecorators() {
+        if (decorators == null) {
+            decorators = new ArrayList<>();
+            addDefaultDecoratorsInto(decorators);
+        }
+        return decorators;
+    }
+
+    private static <I> Request<I> wrapRequest(I input) {
         return Request.newBuilder(input).build();
     }
 
@@ -60,12 +99,16 @@ public abstract class RxUseCase<I, O> {
         return request.origin(origin);
     }
 
+    private static void addDefaultDecoratorsInto(Collection<UseCaseDecorator> decorators) {
+        decorators.add(FailureExceptionConverter.getDefault());
+    }
+
     public static void addDecorator(UseCaseDecorator decorator) {
-        DECORATORS.add(decorator);
+        GLOBAL_DECORATORS.add(decorator);
     }
 
     public static void removeDecorator(UseCaseDecorator decorator) {
-        DECORATORS.remove(decorator);
+        GLOBAL_DECORATORS.remove(decorator);
     }
 
     public static <I, O> Observable<Response<O>> toRx(Synchronous<I, O> operation,
@@ -157,9 +200,15 @@ public abstract class RxUseCase<I, O> {
 
     private static <I, O> Observable<Response<O>> decorate(Observable<Response<O>> stream,
                                                            Request<I> request) {
+        return decorate(stream, request, GLOBAL_DECORATORS);
+    }
+
+    private static <I, O> Observable<Response<O>> decorate(Observable<Response<O>> stream,
+                                                           Request<I> request,
+                                                           Collection<UseCaseDecorator> decorators) {
         return defer(() -> {
             Observable<Response<O>> result = stream;
-            for (UseCaseDecorator decorator : DECORATORS) {
+            for (UseCaseDecorator decorator : decorators) {
                 result = decorator.decorate(result, request);
             }
             return result;
@@ -170,5 +219,4 @@ public abstract class RxUseCase<I, O> {
         return Observable.create(emitter ->
                 subscriber.subscribe(new SafeEmitter<>(emitter)));
     }
-
 }
