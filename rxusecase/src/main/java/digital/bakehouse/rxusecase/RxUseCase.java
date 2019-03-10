@@ -15,6 +15,7 @@ import io.reactivex.ObservableOnSubscribe;
 
 import static io.reactivex.Observable.defer;
 import static io.reactivex.Observable.fromCallable;
+import static io.reactivex.Observable.just;
 
 public abstract class RxUseCase<I, O> {
     private static final Collection<UseCaseDecorator> GLOBAL_DECORATORS = new ArrayList<>();
@@ -52,6 +53,14 @@ public abstract class RxUseCase<I, O> {
     }
 
     protected abstract Observable<Response<O>> execute(I input);
+
+    protected Observable<Response<O>> justSucceed(O output) {
+        return just(Response.succeed(output));
+    }
+
+    protected Observable<Response<O>> justFail(String code, String message) {
+        return just(Response.fail(code, message));
+    }
 
     @SuppressWarnings("unchecked")
     public final <T extends RxUseCase<I, O>> T decorateWith(Collection<UseCaseDecorator> decorators) {

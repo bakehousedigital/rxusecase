@@ -20,7 +20,7 @@ ext {
 
     publishedGroupId = 'digital.bakehouse'
     artifact = 'rxusecase'
-    libraryVersion = '0.9'
+    libraryVersion = '0.9.1'
 
     libraryDescription = 'Mini library for wrapping logic into reactive streams exposing data in a standardized way'
     siteUrl = 'https://github.com/bakehousedigital/rxusecase'

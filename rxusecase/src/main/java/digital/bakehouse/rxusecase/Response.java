@@ -31,6 +31,10 @@ public class Response<O> {
         return new Response<>(null, failure);
     }
 
+    public static <O> Response<O> fail(String errorCode, String errorMessage) {
+        return fail(new Failure(errorCode, errorMessage));
+    }
+
     public static <O> Response<O> fail(Response<?> response) {
         return fail(response.failure);
     }
