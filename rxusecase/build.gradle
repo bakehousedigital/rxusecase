@@ -20,7 +20,7 @@ ext {
 
     publishedGroupId = 'digital.bakehouse'
     artifact = 'rxusecase'
-    libraryVersion = '0.9.1'
+    libraryVersion = getVersion()
 
     libraryDescription = 'Mini library for wrapping logic into reactive streams exposing data in a standardized way'
     siteUrl = 'https://github.com/bakehousedigital/rxusecase'
@@ -43,7 +43,24 @@ dependencies {
 sourceCompatibility = '1.8'
 targetCompatibility = '1.8'
 
-if(project.rootProject.file('local.properties').exists()) {
+if (project.rootProject.file('local.properties').exists()) {
     apply from: 'https://raw.githubusercontent.com/nuuneoi/JCenter/master/installv1.gradle'
     apply from: 'https://raw.githubusercontent.com/nuuneoi/JCenter/master/bintrayv1.gradle'
+}
+
+def getVersion() {
+    return project.property('rxusecase.version').replaceAll("\'", "")
+}
+
+task testVersion() {
+    doLast {
+        println libraryVersion
+    }
+}
+
+task publish(type: GradleBuild) {
+    tasks = [
+            'install',
+            'bintrayUpload'
+    ]
 }
