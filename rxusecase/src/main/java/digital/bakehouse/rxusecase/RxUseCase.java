@@ -17,6 +17,27 @@ import static io.reactivex.Observable.defer;
 import static io.reactivex.Observable.fromCallable;
 import static io.reactivex.Observable.just;
 
+/**
+ * RxUseCase wraps the logic / action / mechanism that the use-case implements,
+ * into an Observable that can be subscribed to.
+ * It can act as an interactor, communicating to with internal or external
+ * components or systems for:
+ * - validating data, current state or context
+ * - retrieving or setting data, local or remote
+ * - subscribing to continuous data changes
+ * - doing any sort of operations, long or short running, one-shot or continously emitting
+ * It should be thought of as a self-contained operation with single contextual responsibility.
+ * <p>
+ * RxUseCase has a standard interface of passing and getting data. It:
+ * - operates with the Request parameter, which wraps the input required by the use-case
+ * - emits a Response object which encapsulates either a successful output
+ * or the failure returned by the use-case
+ * This enables another way of describing use-cases as entities which act
+ * as a standard input - standard output proxies to the outside world.
+ *
+ * @param <I> Input type
+ * @param <O> Output type
+ */
 public abstract class RxUseCase<I, O> {
     private static final Collection<UseCaseDecorator> GLOBAL_DECORATORS = new ArrayList<>();
 
@@ -27,31 +48,92 @@ public abstract class RxUseCase<I, O> {
     private final String ORIGIN = getClass().getSimpleName();
     private Collection<UseCaseDecorator> decorators;
 
+    /**
+     * Create use-case observable without passing any input.
+     * This effectively will invoke {@link #create(Object)} passing null as input.
+     * The sole purpose of this method is to simplify the use-case usage
+     * when no input is required by the use-case.
+     *
+     * @return Observable stream
+     */
     public final Observable<Response<O>> create() {
         return create((I) null);
     }
 
+    /**
+     * Create use-case observable with input.
+     * The passed input will be wrapped into a {@link Request} object
+     * and passed to the {@link #create(Request)} method.
+     *
+     * @param input Use-case input
+     * @return Observable stream
+     */
     public final Observable<Response<O>> create(I input) {
         return create(wrapRequest(input));
     }
 
+    /**
+     * Create use-case observable passing a {@link Request} parameter.
+     * This method is the entry point to the logic/mechanism/action
+     * that this use-case represents.
+     * Typically the subscription to the returned {@link Observable}
+     * will trigger the execution of the use-case.
+     *
+     * @param request Use-case request
+     * @return Observable stream
+     */
     public final Observable<Response<O>> create(Request<I> request) {
         return decorate(execute(request.getInput()),
                 withOrigin(request, ORIGIN), getDecorators());
     }
 
+    /**
+     * Get use-case response.
+     * This effectively will invoke {@link #get(Object)} passing null as input.
+     * The sole purpose of this method is to simplify the use-case usage
+     * when no input is required by the use-case.
+     *
+     * @return Use-case response.
+     */
     public final Response<O> get() {
         return get((I) null);
     }
 
+
+    /**
+     * Get use-case response for the input.
+     * The passed input will be wrapped into a {@link Request} object
+     * and passed to the {@link #get(Request)} method.
+     *
+     * @param input Use-case input
+     * @return Use-case response
+     */
     public final Response<O> get(I input) {
         return get(newRequest(input));
     }
 
+    /**
+     * Get use-case response passing a {@link Request} parameter.
+     * This method is pointing to the entry point to the logic/mechanism/action
+     * that this use-case represents.
+     * It is useful in situations when the response of the use-case
+     * is required to be retrieved in a blocking manner.
+     * The method will block until the first item is emitted by {@link #create(Request)},
+     * return it. See {@link Observable#blockingFirst()} for reference.
+     *
+     * @param request Use-case request
+     * @return Observable stream
+     */
     public final Response<O> get(Request<I> request) {
         return create(request).blockingFirst();
     }
 
+    /**
+     *
+     *
+     * @param input Use-case input
+     * @return Observable stream
+     */
     protected abstract Observable<Response<O>> execute(I input);
 
     protected Observable<Response<O>> justSucceed(O output) {
@@ -120,7 +202,7 @@ public abstract class RxUseCase<I, O> {
         GLOBAL_DECORATORS.remove(decorator);
     }
 
-    public static <I, O> Observable<Response<O>> toRx(Synchronous<I, O> operation,
+    protected static <I, O> Observable<Response<O>> toRx(Synchronous<I, O> operation,
                                                       I input) {
         return fromCallable(() -> operation.act(input))
                 .map(Response::succeed);
@@ -136,7 +218,7 @@ public abstract class RxUseCase<I, O> {
         return decorate(toRx(operation, request.getInput()), request);
     }
 
-    public static <I, O> Observable<Response<O>> toRx(Asynchronous<I, O> operation,
+    protected static <I, O> Observable<Response<O>> toRx(Asynchronous<I, O> operation,
                                                       I input) {
         return create(emitter ->
                 operation.act(input, new Asynchronous.Callback<O>() {
@@ -164,7 +246,7 @@ public abstract class RxUseCase<I, O> {
         return decorate(toRx(operation, request.getInput()), request);
     }
 
-    public static <I, O> Observable<Response<O>> toRx(Continuous<I, O> operation,
+    protected static <I, O> Observable<Response<O>> toRx(Continuous<I, O> operation,
                                                       I input) {
         return create((ObservableEmitter<Response<O>> emitter) ->
                 operation.act(input, new Continuous.Notifier<O>() {
