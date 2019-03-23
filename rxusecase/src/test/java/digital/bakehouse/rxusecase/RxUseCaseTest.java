@@ -23,18 +23,19 @@ import static org.mockito.Mockito.when;
 public class RxUseCaseTest {
 
     @Test
-    public void wrapSynchronousSuccess() {
+    public void fromSynchronousSuccess() {
         String input = "abcdefg";
         Response<String> responseOutput = Response.succeed(input.toUpperCase());
         Synchronous<String, String> operation = String::toUpperCase;
 
-        Observable<Response<String>> operationStream = RxUseCase.wrap(operation, input);
+        Observable<Response<String>> operationStream = RxUseCase.fromSynchronous(operation)
+                .create(input);
 
         assertValue(operationStream, responseOutput);
     }
 
     @Test
-    public void wrapSynchronousError() {
+    public void fromSynchronousError() {
         String input = "abcdefg";
         Failure expectedFailure = new Failure("1", "Failure message");
         Response<String> responseOutput = Response.fail(expectedFailure);
@@ -42,38 +43,41 @@ public class RxUseCaseTest {
             throw FailureException.create("1", "Failure message");
         };
 
-        Observable<Response<String>> operationStream = RxUseCase.wrap(operation, input);
+        Observable<Response<String>> operationStream = RxUseCase.fromSynchronous(operation)
+                .create(input);
 
         assertValue(operationStream, responseOutput);
     }
 
     @Test
-    public void wrapAsynchronousSuccess() {
+    public void fromAsynchronousSuccess() {
         String input = "abcdefg";
         Response<String> responseOutput = Response.succeed(input.toUpperCase());
         Asynchronous<String, String> operation = (operationInput, callback) ->
                 new Thread(() -> callback.succeed(operationInput.toUpperCase())).start();
 
-        Observable<Response<String>> operationStream = RxUseCase.wrap(operation, input);
+        Observable<Response<String>> operationStream = RxUseCase.fromAsynchronous(operation)
+                .create(input);
 
         assertValue(operationStream, responseOutput);
     }
 
     @Test
-    public void wrapAsynchronousError() {
+    public void fromAsynchronousError() {
         String input = "abcdefg";
         Failure expectedFailure = new Failure("1", "Failure message");
         Response<String> responseOutput = Response.fail(expectedFailure);
         Asynchronous<String, String> operation = (operationInput, callback) ->
                 new Thread(() -> callback.fail(new Failure("1", "Failure message"))).start();
 
-        Observable<Response<String>> operationStream = RxUseCase.wrap(operation, input);
+        Observable<Response<String>> operationStream = RxUseCase.fromAsynchronous(operation)
+                .create(input);
 
         assertValue(operationStream, responseOutput);
     }
 
     @Test
-    public void wrapContinuousSuccess() {
+    public void fromContinuousSuccess() {
         String input = "abcdefg";
         char[] chars = input.toCharArray();
         List<Response<String>> responses = new ArrayList<>();
@@ -98,13 +102,14 @@ public class RxUseCaseTest {
             }
         };
 
-        Observable<Response<String>> operationStream = RxUseCase.wrap(operation, input);
+        Observable<Response<String>> operationStream = RxUseCase.fromContinuous(operation)
+                .create(input);
 
         assertValues(operationStream, responses.toArray(new Response[0]));
     }
 
     @Test
-    public void wrapContinuousError() {
+    public void fromContinuousError() {
         String input = "abcdefg";
         char[] chars = input.toCharArray();
         List<Response<String>> responses = new ArrayList<>();
@@ -130,7 +135,8 @@ public class RxUseCaseTest {
             }
         };
 
-        Observable<Response<String>> operationStream = RxUseCase.wrap(operation, input);
+        Observable<Response<String>> operationStream = RxUseCase.fromContinuous(operation)
+                .create(input);
 
         assertValues(operationStream, responses.toArray(new Response[0]));
     }

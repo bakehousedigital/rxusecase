@@ -6,6 +6,7 @@ import digital.bakehouse.rxusecase.FailureException;
 import digital.bakehouse.rxusecase.Request;
 import digital.bakehouse.rxusecase.Response;
 import digital.bakehouse.rxusecase.RxUseCase;
+import digital.bakehouse.rxusecase.decorator.LogDecorator;
 import digital.bakehouse.rxusecase.decorator.UseCaseDecorator;
 import digital.bakehouse.rxusecase.operation.SynchronousUseCase;
 import io.reactivex.Observable;
@@ -37,6 +38,14 @@ public class DecoratorPlayground {
                 .subscribe(consumeSuccess(
                         time -> System.out.println("Time with decor is: " + time)
                 ));
+
+        RxUseCase
+                .fromSynchronous(input -> System.currentTimeMillis())
+                .decorateWith(
+                        LogDecorator.getWithOutput(output -> System.out.println("Output: " + output))
+                )
+                .create()
+                .subscribe(item -> System.out.println("From synchronous " + item));
     }
 
     private static class GetTime extends SynchronousUseCase<Void, Long> {

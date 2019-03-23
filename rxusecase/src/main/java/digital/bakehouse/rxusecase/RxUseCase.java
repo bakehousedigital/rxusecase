@@ -7,6 +7,8 @@ import digital.bakehouse.rxusecase.decorator.FailureExceptionConverter;
 import digital.bakehouse.rxusecase.decorator.UseCaseDecorator;
 import digital.bakehouse.rxusecase.operation.Asynchronous;
 import digital.bakehouse.rxusecase.operation.Continuous;
+import digital.bakehouse.rxusecase.operation.DelegateUseCase;
+import digital.bakehouse.rxusecase.operation.RxSource;
 import digital.bakehouse.rxusecase.operation.Synchronous;
 import digital.bakehouse.rxusecase.toolbox.SafeEmitter;
 import io.reactivex.Observable;
@@ -129,8 +131,6 @@ public abstract class RxUseCase<I, O> {
     }
 
     /**
-     *
-     *
      * @param input Use-case input
      * @return Observable stream
      */
@@ -202,25 +202,31 @@ public abstract class RxUseCase<I, O> {
         GLOBAL_DECORATORS.remove(decorator);
     }
 
+    public static <I, O> RxUseCase<I, O> fromSynchronous(Synchronous<I, O> operation) {
+        return fromSource(input -> toRx(operation, input));
+    }
+
+    public static <I, O> RxUseCase<I, O> fromAsynchronous(Asynchronous<I, O> operation) {
+        return fromSource(input -> toRx(operation, input));
+    }
+
+    public static <I, O> RxUseCase<I, O> fromContinuous(Continuous<I, O> operation) {
+        return fromSource(input -> toRx(operation, input));
+    }
+
+    public static <I, O> RxUseCase<I, O> fromSource(RxSource<I, O> source) {
+        return new DelegateUseCase<>(source);
+    }
+
     protected static <I, O> Observable<Response<O>> toRx(Synchronous<I, O> operation,
-                                                      I input) {
+                                                         I input) {
         return fromCallable(() -> operation.act(input))
                 .map(Response::succeed);
     }
 
-    public static <I, O> Observable<Response<O>> wrap(Synchronous<I, O> operation,
-                                                      I input) {
-        return wrap(operation, newRequest(input));
-    }
-
-    public static <I, O> Observable<Response<O>> wrap(Synchronous<I, O> operation,
-                                                      Request<I> request) {
-        return decorate(toRx(operation, request.getInput()), request);
-    }
-
     protected static <I, O> Observable<Response<O>> toRx(Asynchronous<I, O> operation,
-                                                      I input) {
-        return create(emitter ->
+                                                         I input) {
+        return safeCreate(emitter ->
                 operation.act(input, new Asynchronous.Callback<O>() {
                     @Override
                     public void succeed(O output) {
@@ -236,19 +242,9 @@ public abstract class RxUseCase<I, O> {
                 }));
     }
 
-    public static <I, O> Observable<Response<O>> wrap(Asynchronous<I, O> operation,
-                                                      I input) {
-        return wrap(operation, newRequest(input));
-    }
-
-    public static <I, O> Observable<Response<O>> wrap(Asynchronous<I, O> operation,
-                                                      Request<I> request) {
-        return decorate(toRx(operation, request.getInput()), request);
-    }
-
     protected static <I, O> Observable<Response<O>> toRx(Continuous<I, O> operation,
-                                                      I input) {
-        return create((ObservableEmitter<Response<O>> emitter) ->
+                                                         I input) {
+        return safeCreate((ObservableEmitter<Response<O>> emitter) ->
                 operation.act(input, new Continuous.Notifier<O>() {
                     @Override
                     public void notify(O output) {
@@ -269,29 +265,10 @@ public abstract class RxUseCase<I, O> {
                 .doOnDispose(() -> operation.cancel(input));
     }
 
-    public static <I, O> Observable<Response<O>> wrap(Continuous<I, O> operation,
-                                                      I input) {
-        return wrap(operation, newRequest(input));
-    }
-
-    public static <I, O> Observable<Response<O>> wrap(Continuous<I, O> operation,
-                                                      Request<I> request) {
-        return decorate(toRx(operation, request.getInput()), request);
-    }
-
-    public static <I, O> Observable<Response<O>> wrap(Observable<O> stream,
-                                                      I input) {
-        return wrap(stream, newRequest(input));
-    }
-
-    public static <I, O> Observable<Response<O>> wrap(Observable<O> stream,
-                                                      Request<I> request) {
-        return decorate(stream.map(Response::succeed), request);
-    }
-
-    private static <I, O> Observable<Response<O>> decorate(Observable<Response<O>> stream,
-                                                           Request<I> request) {
-        return decorate(stream, request, GLOBAL_DECORATORS);
+    protected static <O> Observable<Response<O>> safeCreate(
+            ObservableOnSubscribe<Response<O>> subscriber) {
+        return Observable.create(emitter ->
+                subscriber.subscribe(new SafeEmitter<>(emitter)));
     }
 
     private static <I, O> Observable<Response<O>> decorate(Observable<Response<O>> stream,
@@ -304,10 +281,5 @@ public abstract class RxUseCase<I, O> {
             }
             return result;
         });
-    }
-
-    private static <O> Observable<Response<O>> create(ObservableOnSubscribe<Response<O>> subscriber) {
-        return Observable.create(emitter ->
-                subscriber.subscribe(new SafeEmitter<>(emitter)));
     }
 }
