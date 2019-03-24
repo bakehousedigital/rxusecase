@@ -42,7 +42,8 @@ public class DecoratorPlayground {
         RxUseCase
                 .fromSynchronous(input -> System.currentTimeMillis())
                 .decorateWith(
-                        LogDecorator.getWithOutput(output -> System.out.println("Output: " + output))
+                        LogDecorator.getWithOutput(output -> System.out.println("Output: " + output),
+                                "-->")
                 )
                 .create()
                 .subscribe(item -> System.out.println("From synchronous " + item));

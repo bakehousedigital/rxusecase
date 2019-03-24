@@ -56,7 +56,7 @@ This enables another way of describing use-cases as entities which act as a stan
 <br/>
 
 <p align="center">
-  <img src='blob/doc-how-details.PNG' alt='How it works - Complex' align='middle' width='80%'/>
+  <img src='blob/doc-how-details.PNG' alt='How it works - Complex' align='middle' width='85%'/>
 </p>
 
 <br/>

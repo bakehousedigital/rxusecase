@@ -3,7 +3,7 @@ package digital.bakehouse.rxusecase;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import digital.bakehouse.rxusecase.decorator.FailureExceptionConverter;
+import digital.bakehouse.rxusecase.decorator.FailureConverter;
 import digital.bakehouse.rxusecase.decorator.UseCaseDecorator;
 import digital.bakehouse.rxusecase.operation.Asynchronous;
 import digital.bakehouse.rxusecase.operation.Continuous;
@@ -274,7 +274,7 @@ public abstract class RxUseCase<I, O> {
     }
 
     private static void addDefaultDecoratorsInto(Collection<UseCaseDecorator> decorators) {
-        decorators.add(FailureExceptionConverter.getDefault());
+        decorators.add(FailureConverter.getDefault());
     }
 
     /**

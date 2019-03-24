@@ -4,24 +4,65 @@ import digital.bakehouse.rxusecase.Request;
 import digital.bakehouse.rxusecase.Response;
 import io.reactivex.Observable;
 
-@SuppressWarnings("WeakerAccess")
+/**
+ * Simple log decorator.
+ * Useful to enable global logging of all the use-cases.
+ */
 public final class LogDecorator implements UseCaseDecorator {
 
-    private static final String DELIMITER = "~~";
+    private static final String DEFAULT_DELIMITER = "~~";
     private static final LogOutput SYSTEM_OUTPUT = System.out::println;
 
-    private LogOutput logOutput;
+    private final LogOutput logOutput;
+    private final String delimiter;
 
-    private LogDecorator(LogOutput logOutput) {
+    private LogDecorator(LogOutput logOutput, String delimiter) {
         this.logOutput = logOutput;
+        this.delimiter = delimiter;
     }
 
+    /**
+     * Get default logger.
+     *
+     * @return Default logger
+     */
     public static LogDecorator getDefault() {
-        return new LogDecorator(SYSTEM_OUTPUT);
+        return getDefault(DEFAULT_DELIMITER);
     }
 
+    /**
+     * Get default logger using the passed string as
+     * log message delimiter.
+     *
+     * @param delimiter Log message delimiter
+     * @return Delimiter logger
+     */
+    public static LogDecorator getDefault(String delimiter) {
+        return new LogDecorator(SYSTEM_OUTPUT, delimiter);
+    }
+
+    /**
+     * Get logger instance which uses the passed output
+     * to log the messages.
+     *
+     * @param logOutput Output for logging messages
+     * @return Output logger
+     */
     public static LogDecorator getWithOutput(LogOutput logOutput) {
-        return new LogDecorator(logOutput);
+        return getWithOutput(logOutput, DEFAULT_DELIMITER);
+    }
+
+    /**
+     * Get logger instance which uses the passed output to
+     * log the messages. The passed string will be used as
+     * log message delimiter.
+     *
+     * @param logOutput Output for logging messages
+     * @param delimiter Log message delimiter
+     * @return Delimiter logger
+     */
+    public static LogDecorator getWithOutput(LogOutput logOutput, String delimiter) {
+        return new LogDecorator(logOutput, delimiter);
     }
 
     @Override
@@ -46,7 +87,7 @@ public final class LogDecorator implements UseCaseDecorator {
                         logAction(request, "Complete"))
                 .doOnTerminate(() ->
                         logAction(request, "Finish %s Elapsed Time: %sms",
-                                DELIMITER, timeHolder.diff()))
+                                delimiter, timeHolder.diff()))
                 ;
     }
 
@@ -55,7 +96,7 @@ public final class LogDecorator implements UseCaseDecorator {
             message = String.format(message, arguments);
         }
         String logMessage = String.format("%2$s(%3$s) %1$s %4$s",
-                DELIMITER,
+                delimiter,
                 request.getOrigin(),
                 request.getInput(),
                 message);
@@ -75,7 +116,16 @@ public final class LogDecorator implements UseCaseDecorator {
         }
     }
 
+    /**
+     * Log output useful for customizing the way
+     * messages are logged.
+     */
     public interface LogOutput {
+        /**
+         * Log message.
+         *
+         * @param message Message to log
+         */
         void log(String message);
     }
 }
