@@ -48,8 +48,9 @@ public abstract class RxUseCase<I, O> {
         addDefaultDecoratorsInto(GLOBAL_DECORATORS);
     }
 
-    private final String ORIGIN = getClass().getSimpleName();
+    private final String DEFAULT_ORIGIN = getClass().getSimpleName();
     private Collection<UseCaseDecorator> decorators;
+    private String origin;
 
     /**
      * Create use-case observable without passing any input.
@@ -87,7 +88,7 @@ public abstract class RxUseCase<I, O> {
      */
     public final Observable<Response<O>> create(Request<I> request) {
         return decorate(execute(request.getInput()),
-                withOrigin(request, ORIGIN), getDecorators());
+                withOrigin(request, getOrigin()), getDecorators());
     }
 
     /**
@@ -112,7 +113,7 @@ public abstract class RxUseCase<I, O> {
      * @return Use-case response
      */
     public final Response<O> get(I input) {
-        return get(newRequest(input));
+        return get(wrapRequest(input));
     }
 
     /**
@@ -166,6 +167,19 @@ public abstract class RxUseCase<I, O> {
      */
     protected Observable<Response<O>> justFail(String code, String message) {
         return just(Response.fail(code, message));
+    }
+
+    /**
+     * Set the originator of the use-case
+     *
+     * @param origin Originator
+     * @param <T>    Type of this use-case
+     * @return This use-case
+     */
+    @SuppressWarnings("unchecked")
+    public final <T extends RxUseCase<I, O>> T origin(String origin) {
+        this.origin = origin;
+        return (T) this;
     }
 
     /**
@@ -241,17 +255,22 @@ public abstract class RxUseCase<I, O> {
         return decorators;
     }
 
+    private String getOrigin() {
+        if (origin != null) {
+            return origin;
+        }
+        return DEFAULT_ORIGIN;
+    }
+
     private static <I> Request<I> wrapRequest(I input) {
         return Request.newBuilder(input).build();
     }
 
-    private static <I> Request<I> newRequest(I input) {
-        return withOrigin(Request.newBuilder(input).build(),
-                RxUseCase.class.getSimpleName());
-    }
-
     private static <I> Request<I> withOrigin(Request<I> request, String origin) {
-        return request.origin(origin);
+        if (request.getOrigin() == null) {
+            request.origin(origin);
+        }
+        return request;
     }
 
     private static void addDefaultDecoratorsInto(Collection<UseCaseDecorator> decorators) {
