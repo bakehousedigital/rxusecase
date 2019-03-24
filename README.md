@@ -16,7 +16,7 @@ The library provides the core components for implementing the Use Cases (also kn
 ### Gradle
 
 ```groovy
-implementation 'digital.bakehouse:rxusecase:0.9.1'
+implementation 'digital.bakehouse:rxusecase:0.9.5'
 ```
 
 ### Maven
@@ -24,7 +24,7 @@ implementation 'digital.bakehouse:rxusecase:0.9.1'
 <dependency>
 	<groupId>digital.bakehouse</groupId>
 	<artifactId>rxusecase</artifactId>
-	<version>0.9.1</version>
+	<version>0.9.5</version>
 	<type>pom</type>
 </dependency>
 ```
