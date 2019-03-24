@@ -138,7 +138,7 @@ The diagram from above mapped to this use-case looks like this:
 To be added, but for now please check
 
 * Extending RxUseCase, SynchronousUseCase, AsynchronousUseCase, ContinuousUseCase
-* Wrapping using RxUseCase .wrap methods
+* Wrapping using RxUseCase .from methods
 * Consuming RxUseCases with ResponseConsumers
 * Decorating RxUseCases with UseCaseDecorators
 
