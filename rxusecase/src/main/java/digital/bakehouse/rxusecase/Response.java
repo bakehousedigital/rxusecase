@@ -3,7 +3,7 @@ package digital.bakehouse.rxusecase;
 import digital.bakehouse.rxusecase.toolbox.Objects;
 
 /**
- * Wrapper of success and failure data.
+ * Data holder acting as a wrapper of the success and/or failure data.
  * Instances of this class are emitted by use-cases as outputs
  * for the action/logic/mechanism they wrap/define.
  *

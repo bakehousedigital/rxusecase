@@ -1,20 +1,42 @@
 package digital.bakehouse.rxusecase;
 
-import java.util.List;
+import java.util.Collection;
 
 import digital.bakehouse.rxusecase.toolbox.Objects;
 
+/**
+ * Wrapper of errors.
+ * This class is used by the failure outputs of use-cases for
+ * wrapping errors returned by the logic/action/mechanism they represent.
+ */
 public class Failure {
     private String code;
     private String message;
-    private List<Failure> children;
+    private Collection<Failure> children;
 
+    /**
+     * Create a failure with code and message.
+     *
+     * @param code    Failure code
+     * @param message Failure message
+     */
     public Failure(String code, String message) {
         this.code = code;
         this.message = message;
     }
 
-    public Failure(String code, String message, List<Failure> children) {
+    /**
+     * Create a failure with code, message and a list of sub-failures.
+     * This is useful in case the failure object needs to wrap a list
+     * of errors.
+     * Ex. you need to return an object containing all the input errors
+     * (validation errors) of the user registration form.
+     *
+     * @param code     Failure code
+     * @param message  Failure message
+     * @param children Failure list
+     */
+    public Failure(String code, String message, Collection<Failure> children) {
         this.code = code;
         this.message = message;
         this.children = children;
@@ -28,7 +50,7 @@ public class Failure {
         return message;
     }
 
-    public List<Failure> getChildren() {
+    public Collection<Failure> getChildren() {
         return children;
     }
 
