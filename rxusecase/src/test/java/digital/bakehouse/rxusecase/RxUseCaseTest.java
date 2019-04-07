@@ -1,18 +1,19 @@
 package digital.bakehouse.rxusecase;
 
 import org.junit.Test;
+import org.mockito.InOrder;
+import org.mockito.Mockito;
+import org.mockito.stubbing.Answer;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
 
 import digital.bakehouse.rxusecase.decorator.UseCaseDecorator;
-import digital.bakehouse.rxusecase.operation.Asynchronous;
-import digital.bakehouse.rxusecase.operation.Continuous;
-import digital.bakehouse.rxusecase.operation.Synchronous;
 import io.reactivex.Observable;
-import io.reactivex.observers.TestObserver;
 
+import static digital.bakehouse.test.Mocks.mockCollection;
+import static digital.bakehouse.test.Observables.assertValue;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -23,212 +24,155 @@ import static org.mockito.Mockito.when;
 public class RxUseCaseTest {
 
     @Test
-    public void fromSynchronousSuccess() {
-        String input = "abcdefg";
-        Response<String> responseOutput = Response.succeed(input.toUpperCase());
-        Synchronous<String, String> operation = String::toUpperCase;
+    public void createVoidInput() {
+        RxUseCase useCase = mock(RxUseCase.class, Mockito.CALLS_REAL_METHODS);
+        useCase.create();
 
-        Observable<Response<String>> operationStream = RxUseCase.fromSynchronous(operation)
-                .create(input);
-
-        assertValue(operationStream, responseOutput);
+        verify(useCase, times(1)).execute(null);
     }
 
     @Test
-    public void fromSynchronousError() {
-        String input = "abcdefg";
-        Failure expectedFailure = new Failure("1", "Failure message");
-        Response<String> responseOutput = Response.fail(expectedFailure);
-        Synchronous<String, String> operation = operationInput -> {
-            throw FailureException.create("1", "Failure message");
-        };
+    public void createTypeInput() {
+        RxUseCase useCase = mock(RxUseCase.class, Mockito.CALLS_REAL_METHODS);
+        Object input = mock(Object.class);
+        useCase.create(input);
 
-        Observable<Response<String>> operationStream = RxUseCase.fromSynchronous(operation)
-                .create(input);
-
-        assertValue(operationStream, responseOutput);
+        verify(useCase, times(1)).execute(input);
     }
 
     @Test
-    public void fromAsynchronousSuccess() {
-        String input = "abcdefg";
-        Response<String> responseOutput = Response.succeed(input.toUpperCase());
-        Asynchronous<String, String> operation = (operationInput, callback) ->
-                new Thread(() -> callback.succeed(operationInput.toUpperCase())).start();
+    public void createRequestInput() {
+        RxUseCase useCase = mock(RxUseCase.class, Mockito.CALLS_REAL_METHODS);
+        Request request = mock(Request.class);
+        Object input = mock(Object.class);
+        when(request.getInput()).thenReturn(input);
+        useCase.create(request);
 
-        Observable<Response<String>> operationStream = RxUseCase.fromAsynchronous(operation)
-                .create(input);
-
-        assertValue(operationStream, responseOutput);
+        verify(useCase, times(1)).execute(input);
     }
 
     @Test
-    public void fromAsynchronousError() {
-        String input = "abcdefg";
-        Failure expectedFailure = new Failure("1", "Failure message");
-        Response<String> responseOutput = Response.fail(expectedFailure);
-        Asynchronous<String, String> operation = (operationInput, callback) ->
-                new Thread(() -> callback.fail(new Failure("1", "Failure message"))).start();
+    public void getVoidInput() {
+        RxUseCase useCase = mock(RxUseCase.class, Mockito.CALLS_REAL_METHODS);
+        Response response = mock(Response.class);
+        when(useCase.execute(null)).thenReturn(Observable.just(response));
 
-        Observable<Response<String>> operationStream = RxUseCase.fromAsynchronous(operation)
-                .create(input);
+        Response returnedResponse = useCase.get();
 
-        assertValue(operationStream, responseOutput);
+        verify(useCase, times(1)).execute(null);
+        assertEquals(response, returnedResponse);
     }
 
     @Test
-    public void fromContinuousSuccess() {
-        String input = "abcdefg";
-        char[] chars = input.toCharArray();
-        List<Response<String>> responses = new ArrayList<>();
-        for (char letter : chars) {
-            responses.add(Response.succeed(String.valueOf(letter)));
-        }
+    public void getTypeInput() {
+        RxUseCase useCase = mock(RxUseCase.class, Mockito.CALLS_REAL_METHODS);
+        Response response = mock(Response.class);
+        Request request = mock(Request.class);
+        Object input = mock(Object.class);
+        when(request.getInput()).thenReturn(input);
 
-        Continuous<String, String> operation = new Continuous<String, String>() {
-            @Override
-            public void act(String input, Notifier<String> notifier) {
-                new Thread(() -> {
-                    for (char letter : input.toCharArray()) {
-                        notifier.notify(String.valueOf(letter));
-                    }
-                    notifier.complete();
-                }).start();
-            }
+        when(useCase.execute(request.getInput())).thenReturn(Observable.just(response));
 
-            @Override
-            public void cancel(String input) {
+        Response returnedResponse = useCase.get(request.getInput());
 
-            }
-        };
-
-        Observable<Response<String>> operationStream = RxUseCase.fromContinuous(operation)
-                .create(input);
-
-        assertValues(operationStream, responses.toArray(new Response[0]));
+        verify(useCase, times(1)).execute(request.getInput());
+        assertEquals(response, returnedResponse);
     }
 
     @Test
-    public void fromContinuousError() {
-        String input = "abcdefg";
-        char[] chars = input.toCharArray();
-        List<Response<String>> responses = new ArrayList<>();
-        for (char letter : chars) {
-            responses.add(Response.succeed(String.valueOf(letter)));
-        }
-        responses.add(Response.fail(new Failure("1", "Some error message")));
+    public void getRequestInput() {
+        RxUseCase useCase = mock(RxUseCase.class, Mockito.CALLS_REAL_METHODS);
 
-        Continuous<String, String> operation = new Continuous<String, String>() {
-            @Override
-            public void act(String input, Notifier<String> notifier) {
-                new Thread(() -> {
-                    for (char letter : input.toCharArray()) {
-                        notifier.notify(String.valueOf(letter));
-                    }
-                    notifier.complete(new Failure("1", "Some error message"));
-                }).start();
-            }
+        Response response = mock(Response.class);
+        Request request = mock(Request.class);
+        Object input = mock(Object.class);
+        when(request.getInput()).thenReturn(input);
 
-            @Override
-            public void cancel(String input) {
+        when(useCase.execute(request.getInput())).thenReturn(Observable.just(response));
 
-            }
-        };
+        Response returnedResponse = useCase.get(request);
 
-        Observable<Response<String>> operationStream = RxUseCase.fromContinuous(operation)
-                .create(input);
-
-        assertValues(operationStream, responses.toArray(new Response[0]));
+        verify(useCase, times(1)).execute(request.getInput());
+        assertEquals(response, returnedResponse);
     }
 
     @Test
-    public void decorates() {
-        String input = "abcdefg";
-        UseCaseDecorator decorator = mock(UseCaseDecorator.class);
-        when(decorator.decorate(any(), any()))
-                .thenAnswer(invocation -> invocation.getArgument(0));
+    public void justSucceed() {
+        RxUseCase useCase = mock(RxUseCase.class, Mockito.CALLS_REAL_METHODS);
+        Object output = mock(Object.class);
+        Response<Object> expectedResponse = Response.succeed(output);
 
-        RxUseCase.addDecorator(decorator);
-        Observable<Response<String>> operationStream = new RxUseCase<String, String>() {
-
-            @Override
-            protected Observable<Response<String>> execute(String input) {
-                return Observable.just(input.toUpperCase())
-                        .map(Response::succeed);
-            }
-        }.create(input);
-
-        TestObserver<Response<String>> observer = operationStream.test();
-        observer.awaitTerminalEvent();
-
-        verify(decorator, times(1)).decorate(any(), any());
+        Observable<Response<Object>> justSuccess = useCase.justSucceed(output);
+        assertValue(justSuccess, expectedResponse);
     }
 
     @Test
-    public void decoratesInCorrectOrder() {
-        String input = "abcdefg";
-        UseCaseDecorator firstDecorator = new UseCaseDecorator() {
-            @Override
-            public <I, O> Observable<Response<O>> decorate(Observable<Response<O>> origin,
-                                                           Request<I> request) {
-                return origin.map(oResponse -> {
-                    O data = oResponse.getData();
-                    if (data instanceof String) {
-                        data = (O) ((String) data).concat((String) data);
-                        return Response.succeed(data);
-                    }
-                    return oResponse;
+    public void justFail() {
+        RxUseCase useCase = mock(RxUseCase.class, Mockito.CALLS_REAL_METHODS);
+        String code = "some code";
+        String message = "some message";
+        Failure output = new Failure(code, message);
+
+        Response<Object> expectedResponse = Response.fail(output);
+
+        Observable<Response<Object>> justFail = useCase.justFail(code, message);
+        assertValue(justFail, expectedResponse);
+    }
+
+    @Test
+    public void origin() {
+        RxUseCase useCase = mock(RxUseCase.class, Mockito.CALLS_REAL_METHODS);
+        String origin = "some origin";
+
+        //Check that it returns the same instance
+        RxUseCase useCaseWithOrigin = useCase.origin(origin);
+        assertEquals(useCase, useCaseWithOrigin);
+
+        //Check that the origin is set on a request without an origin
+        Object input = mock(Object.class);
+        Request request = Request.newBuilder(input).build();
+
+        useCase.create(request);
+        assertEquals(origin, request.getOrigin());
+
+        //Check that the origin is not set on a request with an origin
+        Object inputTwo = mock(Object.class);
+        Request requestTwo = Request.newBuilder(input)
+                .build()
+                .origin("some other origin");
+
+        useCase.create(requestTwo);
+        assertNotEquals(origin, requestTwo.getOrigin());
+    }
+
+    @SuppressWarnings("ConfusingArgumentToVarargsMethod")
+    @Test
+    public void decorateWithCollection() {
+        RxUseCase useCase = mock(RxUseCase.class, Mockito.CALLS_REAL_METHODS);
+
+        Request request = mock(Request.class);
+        Object input = mock(Object.class);
+        when(request.getInput()).thenReturn(input);
+
+        Observable<Response<Object>> stream = mock(Observable.class);
+        when(useCase.execute(input)).thenReturn(stream);
+
+        Collection<UseCaseDecorator> decorators = mockCollection(UseCaseDecorator.class,
+                decorator -> {
+                    when(decorator.decorate(any(), any())).thenAnswer(
+                            (Answer<Observable>) invocation -> {
+                                Object[] args = invocation.getArguments();
+                                return (Observable) args[0];
+                            });
                 });
-            }
-        };
-        UseCaseDecorator secondDecorator = new UseCaseDecorator() {
-            @Override
-            public <I, O> Observable<Response<O>> decorate(Observable<Response<O>> origin,
-                                                           Request<I> request) {
-                return origin.map(oResponse -> {
-                    O data = oResponse.getData();
-                    if (data instanceof String) {
-                        data = (O) ((String) data).replaceAll("A", "Z");
-                        return Response.succeed(data);
-                    }
-                    return oResponse;
-                });
-            }
-        };
 
+        useCase.decorateWith(decorators)
+                .create(request)
+                .subscribe();
 
-        RxUseCase.addDecorator(firstDecorator);
-        RxUseCase.addDecorator(secondDecorator);
-
-        Observable<Response<String>> operationStream = new RxUseCase<String, String>() {
-            @Override
-            protected Observable<Response<String>> execute(String input) {
-                return Observable.just(input.toUpperCase())
-                        .map(Response::succeed);
-            }
-        }.create(input);
-
-        Response<String> item = operationStream.blockingFirst();
-        assertEquals("ZBCDEFGZBCDEFG", item.getData());
-
-        RxUseCase.removeDecorator(firstDecorator);
-        RxUseCase.removeDecorator(secondDecorator);
-    }
-
-    private <O> void assertValue(Observable<Response<O>> operationStream, Response<O> expectedResponse) {
-        TestObserver<Response<O>> observer = operationStream.test();
-        observer.awaitTerminalEvent();
-        observer.assertValue(expectedResponse);
-        observer.assertComplete();
-        observer.assertNoErrors();
-    }
-
-    @SafeVarargs
-    private final <O> void assertValues(Observable<Response<O>> operationStream, Response<O>... expectedResponses) {
-        TestObserver<Response<O>> observer = operationStream.test();
-        observer.awaitTerminalEvent();
-        observer.assertValues(expectedResponses);
-        observer.assertComplete();
-        observer.assertNoErrors();
+        InOrder inOrder = Mockito.inOrder(decorators.toArray(new UseCaseDecorator[0]));
+        for (UseCaseDecorator decorator : decorators) {
+            inOrder.verify(decorator).decorate(any(), any());
+        }
     }
 }
