@@ -16,7 +16,7 @@ The library provides the core components for implementing the Use Cases (also kn
 ### Gradle
 
 ```groovy
-implementation 'digital.bakehouse:rxusecase:0.9.5'
+implementation 'digital.bakehouse:rxusecase:0.9.6'
 ```
 
 ### Maven
@@ -24,9 +24,14 @@ implementation 'digital.bakehouse:rxusecase:0.9.5'
 <dependency>
 	<groupId>digital.bakehouse</groupId>
 	<artifactId>rxusecase</artifactId>
-	<version>0.9.5</version>
+	<version>0.9.6</version>
 	<type>pom</type>
 </dependency>
+```
+
+### External dependencies
+```
+io.reactivex.rxjava2:rxjava:2.2.8
 ```
 
 ## How it works
@@ -56,7 +61,7 @@ This enables another way of describing use-cases as entities which act as a stan
 <br/>
 
 <p align="center">
-  <img src='blob/doc-how-details.PNG' alt='How it works - Complex' align='middle' width='85%'/>
+  <img src='blob/doc-how-details.PNG' alt='How it works - Complex' align='middle'/>
 </p>
 
 <br/>
