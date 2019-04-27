@@ -30,9 +30,12 @@ implementation 'digital.bakehouse:rxusecase:0.9.6'
 ```
 
 ### External dependencies
+The library uses the following external dependencies which will be resolved automatically by Gradle. 
+There is no need of adding them to your build.gradle file manually.
 ```
 io.reactivex.rxjava2:rxjava:2.2.8
-```
+``` 
+
 
 ## How it works
 <p align="center">
