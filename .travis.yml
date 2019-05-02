@@ -14,7 +14,6 @@ licenses:
     - 'android-sdk-license-.+'
 
 before_script:
-- y | sdkmanager "platforms;android-27"
 - chmod +x gradlew
 
 script:
